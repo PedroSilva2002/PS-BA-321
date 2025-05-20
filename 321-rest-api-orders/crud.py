@@ -10,13 +10,22 @@ def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate)
     db.flush()
 
     for item in commande.produits:
-        # 🔍 Vérifie le produit auprès du service Node
-        res = requests.get(f"http://produits-service:8000/api/produits/{item.produit_id}")
+        res = requests.get(f"http://traefik/api/produits/{item.produit_id}")
+
         if res.status_code != 200:
             raise HTTPException(status_code=404, detail=f"Produit ID {item.produit_id} non trouvé")
 
-        produit = res.json()
-        total += produit["prix"] * item.quantite
+        try:
+            json_data = res.json()
+        except Exception:
+            raise HTTPException(status_code=500, detail="Réponse non JSON de l'API Produits")
+
+        if "data" not in json_data or not json_data["data"]:
+            raise HTTPException(status_code=404, detail=f"Produit ID {item.produit_id} non trouvé dans la réponse")
+
+        produit = json_data["data"]
+
+        total += float(produit["prix"]) * item.quantite
 
         cp = models.CommandeProduit(
             commande_id=db_commande.id,

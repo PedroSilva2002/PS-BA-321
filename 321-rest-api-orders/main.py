@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 import models, schemas, crud
@@ -22,11 +22,15 @@ def get_db():
     finally:
         db.close()
 
+router = APIRouter()
 
-@app.post("/commandes/", response_model=schemas.CommandeOut)
+@router.post("/commandes/", response_model=schemas.CommandeOut)
 def create_commande(commande: schemas.CommandeCreate, db: Session = Depends(get_db)):
     return crud.create_commande_with_produits(db, commande)
 
-@app.get("/commandes/", response_model=List[schemas.CommandeOut])
+@router.get("/commandes/", response_model=List[schemas.CommandeOut])
 def get_all_commandes(db: Session = Depends(get_db)):
     return crud.get_all_commandes(db)
+
+app.include_router(router, prefix="/api")
+

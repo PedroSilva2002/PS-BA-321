@@ -72,6 +72,26 @@ const getAllProduits = async (request, response) => {
     }
 };
 
+const getProduitById = async (request, response) => {
+    const { id } = request.params;
+    try{
+        const produitById = await produit.findByPk(id);
+        return response.status(200).json({
+            status: "success",
+            message:"produit trouvé",
+            data: produitById
+        })
+    } catch (error) {
+        console.error(error);
+        return response.status(500).json({
+            status: "error",
+            message: "Erreur lors fetch du produit by id",
+            error: error.message
+        });
+    }
+}
+
+
 const updateProduit = async (request, response) => {
     const { id } = request.params;
     const { nom, description, prix, quantite_en_stock } = request.body;
@@ -109,4 +129,4 @@ const updateProduit = async (request, response) => {
 
 
 
-module.exports = {addProduit,deleteProduit,getAllProduits, updateProduit}
+module.exports = {addProduit,deleteProduit,getAllProduits, updateProduit,getProduitById}

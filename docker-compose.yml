@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  commandes-api:
+    build: ./321-rest-api-orders
+    depends_on:
+      - commandes-db
+      - produits-api
+    command: ["./wait-for-it.sh", "commandes-db", "5432", "--", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    labels:
+      - "traefik.http.routers.commandes.rule=PathPrefix(`/api/commandes`)"
+      - "traefik.http.services.commandes.loadbalancer.server.port=8000"
+    networks:
+      - backend
+
+  commandes-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: commandes_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - commandes_pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  produits-api:
+    build: ./321-rest-api-produits
+    depends_on:
+      - produits-db
+    env_file:
+      - ./321-rest-api-produits/.env
+    labels:
+      - "traefik.http.routers.produits.rule=PathPrefix(`/api/produits`)"
+      - "traefik.http.services.produits.loadbalancer.server.port=3000"
+    networks:
+      - backend
+
+  produits-db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: products-catalog
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d products-catalog"]
+      interval: 5s
+      retries: 5
+    networks:
+      - backend
+
+  traefik:
+    image: traefik:v2.9
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - backend
+
+volumes:
+  commandes_pgdata:
+
+networks:
+  backend:
