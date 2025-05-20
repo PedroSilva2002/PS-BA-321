@@ -4,6 +4,7 @@ from database import SessionLocal, engine
 import models, schemas, crud
 from typing import List
 import logging
+import socket
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -28,9 +29,12 @@ router = APIRouter()
 def create_commande(commande: schemas.CommandeCreate, db: Session = Depends(get_db)):
     return crud.create_commande_with_produits(db, commande)
 
-@router.get("/commandes/", response_model=List[schemas.CommandeOut])
+@router.get("/commandes/")
 def get_all_commandes(db: Session = Depends(get_db)):
-    return crud.get_all_commandes(db)
+    return {
+        "host": socket.gethostname(),
+        "commandes": crud.get_all_commandes(db)
+    }
 
 app.include_router(router, prefix="/api")
 
