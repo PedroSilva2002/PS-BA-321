@@ -22,8 +22,8 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 const setupSwagger = (app) => {
-    app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-    console.log("Swagger est dispo sur le url: http://localhost/docs");
+    app.use("/produits/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+    console.log("Swagger est dispo sur le url: http://localhost/produits/docs");
 };
 
 module.exports = setupSwagger;
