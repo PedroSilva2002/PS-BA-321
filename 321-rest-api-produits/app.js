@@ -8,7 +8,9 @@ const { consumeStockUpdates, waitForRabbitMQ } = require("./consumer/stockConsum
 
 const app = express();
 app.use(express.json());
+
 setupSwagger(app);
+
 app.use("/api", produitsRouter);
 
 app.get("/health", (req, res) => {

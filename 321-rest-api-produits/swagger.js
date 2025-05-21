@@ -11,8 +11,8 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: "http://localhost/api/produits",
-                description: "Development server",
+                url: "http://localhost",
+                description: "Traefik reverse proxy",
             },
         ],
     },
@@ -22,9 +22,8 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 const setupSwagger = (app) => {
-    app.use("/api-swagger", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-    console.log("Swagger est dispo sur le url: http://localhost/api/produits/api-swagger");
-
+    app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+    console.log("Swagger est dispo sur le url: http://localhost/docs");
 };
 
 module.exports = setupSwagger;
