@@ -37,7 +37,7 @@ services:
       - "traefik.http.routers.produits.service=produits"
       - "traefik.http.services.produits.loadbalancer.server.port=3000"
 
-      - "traefik.http.routers.produits-docs.rule=PathPrefix(`/docs`)"
+      - "traefik.http.routers.produits-docs.rule=PathPrefix(`/produits/docs`)"
       - "traefik.http.routers.produits-docs.service=produits-docs"
       - "traefik.http.services.produits-docs.loadbalancer.server.port=3000"
     networks:
