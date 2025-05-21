@@ -7,7 +7,7 @@ import json
 
 def publish_stock_update(produit_id: int, quantite: int):
     try:
-        credentials = pika.PlainCredentials('user', 'password')  # 👈 identifiants définis dans docker-compose
+        credentials = pika.PlainCredentials('user', 'password')
         parameters = pika.ConnectionParameters(host="rabbitmq", credentials=credentials)
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
@@ -56,7 +56,6 @@ def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate)
         )
         db.add(cp)
 
-        # Envoi du message pour mise à jour du stock
         publish_stock_update(item.produit_id, item.quantite)
 
     db_commande.total = total

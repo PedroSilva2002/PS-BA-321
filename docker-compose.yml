@@ -34,7 +34,12 @@ services:
       - ./321-rest-api-produits/.env
     labels:
       - "traefik.http.routers.produits.rule=PathPrefix(`/api/produits`)"
+      - "traefik.http.routers.produits.service=produits"
       - "traefik.http.services.produits.loadbalancer.server.port=3000"
+
+      - "traefik.http.routers.produits-docs.rule=PathPrefix(`/docs`)"
+      - "traefik.http.routers.produits-docs.service=produits-docs"
+      - "traefik.http.services.produits-docs.loadbalancer.server.port=3000"
     networks:
       - backend
 
@@ -56,8 +61,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"   # Port pour les messages
-      - "15672:15672" # Port pour le dashboard web
+      - "5672:5672"   
+      - "15672:15672" 
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
@@ -86,4 +91,8 @@ networks:
 
   # http://localhost:8080/dashboard/#/
   # docker compose up --scale commandes-api=2 --build
+  # http://localhost:15672/#/
+
+  #http://localhost/docs/#/
+  #http://localhost/api/commandes/docs#/
 
