@@ -11,7 +11,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: "http://localhost:3000",
+                url: "http://localhost/api/produits",
                 description: "Development server",
             },
         ],
@@ -23,7 +23,8 @@ const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 const setupSwagger = (app) => {
     app.use("/api-swagger", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-    console.log("Swagger est dispo sur le url: http://localhost:3000/api-swagger");
+    console.log("Swagger est dispo sur le url: http://localhost/api/produits/api-swagger");
+
 };
 
 module.exports = setupSwagger;

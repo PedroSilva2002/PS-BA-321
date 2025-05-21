@@ -2,6 +2,28 @@ from sqlalchemy.orm import Session
 import models, schemas
 import requests
 from fastapi import HTTPException
+import pika
+import json
+
+def publish_stock_update(produit_id: int, quantite: int):
+    try:
+        credentials = pika.PlainCredentials('user', 'password')  # 👈 identifiants définis dans docker-compose
+        parameters = pika.ConnectionParameters(host="rabbitmq", credentials=credentials)
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+        channel.queue_declare(queue="stock_update", durable=True)
+
+        message = {"produit_id": produit_id, "quantite": quantite}
+        channel.basic_publish(
+            exchange="",
+            routing_key="stock_update",
+            body=json.dumps(message)
+        )
+        connection.close()
+        print(f"Message envoyé à RabbitMQ : {message}")
+    except Exception as e:
+        print(f"Erreur lors de la publication du message RabbitMQ : {e}")
+
 
 def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate):
     total = 0
@@ -33,6 +55,9 @@ def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate)
             quantite=item.quantite
         )
         db.add(cp)
+
+        # Envoi du message pour mise à jour du stock
+        publish_stock_update(item.produit_id, item.quantite)
 
     db_commande.total = total
     db.commit()

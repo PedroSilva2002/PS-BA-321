@@ -1,11 +1,10 @@
-version: "3.8"
-
 services:
   commandes-api:
     build: ./321-rest-api-orders
     depends_on:
       - commandes-db
       - produits-api
+      - rabbitmq
     command: ["./wait-for-it.sh", "commandes-db", "5432", "--", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     labels:
       - "traefik.http.routers.commandes.rule=PathPrefix(`/api/commandes`)"
@@ -30,6 +29,7 @@ services:
     build: ./321-rest-api-produits
     depends_on:
       - produits-db
+      - rabbitmq
     env_file:
       - ./321-rest-api-produits/.env
     labels:
@@ -53,7 +53,16 @@ services:
       retries: 5
     networks:
       - backend
-
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # Port pour les messages
+      - "15672:15672" # Port pour le dashboard web
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - backend
   traefik:
     image: traefik:v2.9
     command:
@@ -76,3 +85,5 @@ networks:
   backend:
 
   # http://localhost:8080/dashboard/#/
+  # docker compose up --scale commandes-api=2 --build
+
