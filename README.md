@@ -1,6 +1,6 @@
 # Microservices E-Commerce – Projet 321
 
-Ce projet met en place une partie d'une plateforme e-commerce en architecture microservices avec messagerie asynchrone via RabbitMQ.
+Le projet simule en  une partie d'une architecture e-commerce en architecture microservices et on utilise une messagerie asynchrone via RabbitMQ.
 
 ---
 
@@ -94,4 +94,22 @@ Chaque service consomme depuis une **queue different**, liée à l’exchange **
 - **Découplage total** : chaque service consomme indépendamment le message.
 - **Scalabilité** : on peut dupliquer les consommateurs (stock, mail, logs...).
 - **Résilience** : les messages sont persistés dans les queues même si un service est temporairement hors-ligne.
+
+## 🧠 Justification de l’usage de RabbitMQ
+
+Vu l’architecture RabbitMQ a été utilisé parce que il permet :
+
+ - Asynchronisme : les APIs répondent immédiatement, sans attendre les traitements lents (stock, mail).
+
+ - Résilience : les messages sont conservés même si un service tombe temporairement.
+
+ - Scalabilité horizontale : on peut multiplier les consommateurs sans changer le producteur.
+
+ - Extensibilité : de nouveaux services peuvent consommer les événements sans perturber le reste du système.
+
+ - Découplage fort : chaque service fait son travail sans connaître les autres.
+
+RabbitMQ est donc essentiele dans cette architecture.
+
+
 
