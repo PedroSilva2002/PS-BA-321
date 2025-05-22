@@ -1,4 +1,7 @@
 const amqp = require('amqplib');
+const os = require('os');
+
+const workerId = `${os.hostname()}-${Math.floor(Math.random() * 1000)}`;
 
 async function startWorker() {
   try {
@@ -11,13 +14,13 @@ async function startWorker() {
     await channel.assertQueue(queue, { durable: true });
     await channel.bindQueue(queue, 'commandes', 'commande.nouvelle');
 
-    console.log("📬 [mail-worker] Waiting for 'commande.nouvelle' messages...");
+    console.log("[mail-worker] Waiting for 'commande.nouvelle' messages...");
 
     channel.consume(queue, async (msg) => {
       if (msg !== null) {
         const event = JSON.parse(msg.content.toString());
-        console.log(`✅✅✅✅✅ Simulating email sent to: ${event.email}`);
-        console.log(`✅✅✅✅✅Commande #${event.id_commande} de ${event.total} CHF`);
+        console.log(`✅✅✅✅✅ [${workerId}] Simulating email sent to: ${event.email}`);
+        console.log(`✅✅✅✅✅ [${workerId}] Commande #${event.id_commande} de ${event.total} CHF`);
         channel.ack(msg);
       }
     });

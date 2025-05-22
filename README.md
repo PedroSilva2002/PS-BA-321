@@ -1,55 +1,97 @@
 # Microservices E-Commerce – Projet 321
 
-Ce projet met en place une partie d'une plateforme e-commerce en architecture microservices avec les services suivants :
+Ce projet met en place une partie d'une plateforme e-commerce en architecture microservices avec messagerie asynchrone via RabbitMQ.
 
-- **Produits API** : service Node.js/Express pour la gestion des produits.
-- **Commandes API** : service FastAPI pour la gestion des commandes.
-- **RabbitMQ** : gestion des messages asynchrones (mise à jour du stock).
-- **Traefik** : reverse proxy API gateway pour pointer vers le bon service.
+---
+
+## Services inclus
+- **Produits API** (`Node.js/Express`) : gestion du catalogue produits et du stock.
+- **Commandes API** (`FastAPI`) : création de commandes, calcul total, publication d’événements.
+- **RabbitMQ** : broker de messages pour l’échange asynchrone entre services.
+- **Mail Worker** (`Node.js`) : consomme les commandes et simule l’envoi d’un e-mail.
+- **Traefik** : reverse proxy API Gateway pour centraliser l'accès aux APIs.
 
 ---
 
 ## Vue d'ensemble de l'architecture
-![Schéma de l’architecture](./workflow_ecomerce.drawio.png)
 
+![Schéma de l’architecture](./321-ecomerce.png)
+
+---
 
 ## Lancer le projet
 
 ### Prérequis
 
-- [Docker](https://www.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
+- Docker
+- Docker Compose
 
-dans le folder contenant le `docker-compose.yml` lancer:
+### Démarrage
+
+Dans le dossier qui contient le fichier `docker-compose.yml` :
 
 ```bash
 docker compose up --build
 ```
 
-# Accès aux services
+### Si besoin de réinitialiser complètement :
 
-API Produits : http://localhost/api/produits
+```bash
+docker compose down -v
+docker compose up --build
+```
 
-Swagger Produits : http://localhost/produits/docs/#/
+---
 
-API Commandes : http://localhost/api/commandes
+## Accès aux services
 
-Swagger Commandes : http://localhost/api/commandes/docs
+| Service              | URL                                   |
+|----------------------|----------------------------------------|
+| **API Produits**     | http://localhost/api/produits          |
+| **Swagger Produits** | http://localhost/produits/docs/#/      |
+| **API Commandes**    | http://localhost/api/commandes         |
+| **Swagger Commandes**| http://localhost/api/commandes/docs    |
+| **RabbitMQ UI**      | http://localhost:15672                 |
+| **Traefik Dashboard**| http://localhost:8080/dashboard/#/     |
 
-RabbitMQ UI : http://localhost:15672
-- Username : user
-- Password: password
+**Login RabbitMQ** :
+- **Username** : `user`
+- **Password** : `password`
 
-Traefik UI : http://localhost:8080/dashboard/#/
+---
 
-##  Utilisation de RabbitMQ
-#### Pattern choisi : Work Queue
+## Utilisation de RabbitMQ
 
-Le service `commandes-api` envoie des messages dans une file RabbitMQ (`stock_update`) pour signaler la création d'une commande avec certains produits. Le service `produits-api` consomme ces messages pour **mettre à jour le stock** des produits concernés.
+### Pattern utilisé : `Pub/Sub`
 
+- Le service **commandes-api** publie un message à chaque nouvelle commande dans un **exchange** RabbitMQ.
+- Le **produits-api** écoute ce message pour mettre à jour le stock.
+- Le **mail-worker** écoute le même message et simule un envoi d’email au client.
 
-#### Intérêt de RabbitMQ ici
+Chaque service consomme depuis une **queue different**, liée à l’exchange **commandes**.
 
-- **Découplage** : les deux services n’ont pas besoin de se connaître.
-- **Fiabilité** : si `produits-api` est temporairement indisponible, les messages restent en file.
-- **Scalabilité** : on peut ajouter plusieurs consommateurs.
+---
+
+### Exemple de message publié
+
+```json
+{
+  "id_commande": 12,
+  "email": "client@example.com",
+  "total": 129.50,
+  "produits": [
+    { "produit_id": 1, "quantite": 2 },
+    { "produit_id": 4, "quantite": 1 }
+  ],
+  "timestamp": "2025-05-22T14:34:12.456Z"
+}
+```
+
+---
+
+### ✅ Avantages du pattern Pub/Sub
+
+- **Découplage total** : chaque service consomme indépendamment le message.
+- **Scalabilité** : on peut dupliquer les consommateurs (stock, mail, logs...).
+- **Résilience** : les messages sont persistés dans les queues même si un service est temporairement hors-ligne.
+

@@ -102,4 +102,6 @@ networks:
 
   #http://localhost/docs/#/
   #http://localhost/api/commandes/docs#/
+  #docker compose up --scale mail-worker=2
+
 
