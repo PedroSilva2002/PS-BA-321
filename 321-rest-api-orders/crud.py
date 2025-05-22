@@ -28,7 +28,7 @@ def publish_commande_creee(event: dict):
             body=json.dumps(event),
             properties=props
         )
-        logging.info("✅✅✅✅✅ message publié avec succès ICI : %s", event) # need to make this visible cuz i cant read
+        logging.info("✅✅✅✅✅ message publié avec succès ICI : %s", event) ## j'exagere les logs pcq j'arriva pas a lire
     except AMQPError as e:
         logging.error("Erreur RabbitMQ lors de la publication : %s", e)
     finally:
@@ -39,7 +39,7 @@ def publish_commande_creee(event: dict):
             logging.warning("Erreur lors de la fermeture de la connexion RabbitMQ : %s", e)
 
 def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate):
-    db_commande = models.Commande()
+    db_commande = models.Commande(email=commande.email)
     db.add(db_commande)
     db.flush()
 
@@ -65,6 +65,7 @@ def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate)
 
     evenement = {
         "id_commande": db_commande.id,
+        "email": db_commande.email,
         "total": float(db_commande.total),
         "produits": [
             {"produit_id": p.produit_id, "quantite": p.quantite}
