@@ -1,66 +1,79 @@
 from sqlalchemy.orm import Session
 import models, schemas
+
 import requests
 from fastapi import HTTPException
-import pika
-import json
 
-def publish_stock_update(produit_id: int, quantite: int):
+import pika, json, logging
+from pika.exceptions import AMQPError
+
+def publish_commande_creee(event: dict):
+    credentials = pika.PlainCredentials('user', 'password')
+    params = pika.ConnectionParameters(
+        host="rabbitmq",
+        credentials=credentials,
+        heartbeat=30
+    )
+
     try:
-        credentials = pika.PlainCredentials('user', 'password')
-        parameters = pika.ConnectionParameters(host="rabbitmq", credentials=credentials)
-        connection = pika.BlockingConnection(parameters)
+        connection = pika.BlockingConnection(params)
         channel = connection.channel()
-        channel.queue_declare(queue="stock_update", durable=True)
+        channel.exchange_declare(exchange="commandes", exchange_type="topic", durable=True)
+        channel.confirm_delivery()
 
-        message = {"produit_id": produit_id, "quantite": quantite}
+        props = pika.BasicProperties(delivery_mode=2)
         channel.basic_publish(
-            exchange="",
-            routing_key="stock_update",
-            body=json.dumps(message)
+            exchange="commandes",
+            routing_key="commande.nouvelle",
+            body=json.dumps(event),
+            properties=props
         )
-        connection.close()
-        print(f"Message envoyé à RabbitMQ : {message}")
-    except Exception as e:
-        print(f"Erreur lors de la publication du message RabbitMQ : {e}")
-
+        logging.info("✅✅✅✅✅ message publié avec succès ICI : %s", event) # need to make this visible cuz i cant read
+    except AMQPError as e:
+        logging.error("Erreur RabbitMQ lors de la publication : %s", e)
+    finally:
+        try:
+            if connection.is_open:
+                connection.close()
+        except Exception as e:
+            logging.warning("Erreur lors de la fermeture de la connexion RabbitMQ : %s", e)
 
 def create_commande_with_produits(db: Session, commande: schemas.CommandeCreate):
-    total = 0
     db_commande = models.Commande()
     db.add(db_commande)
     db.flush()
 
+    total = 0
     for item in commande.produits:
         res = requests.get(f"http://traefik/api/produits/{item.produit_id}")
-
         if res.status_code != 200:
             raise HTTPException(status_code=404, detail=f"Produit ID {item.produit_id} non trouvé")
+        data = res.json().get("data")
+        if not data:
+            raise HTTPException(status_code=404, detail=f"Produit ID {item.produit_id} absent de la réponse")
 
-        try:
-            json_data = res.json()
-        except Exception:
-            raise HTTPException(status_code=500, detail="Réponse non JSON de l'API Produits")
-
-        if "data" not in json_data or not json_data["data"]:
-            raise HTTPException(status_code=404, detail=f"Produit ID {item.produit_id} non trouvé dans la réponse")
-
-        produit = json_data["data"]
-
-        total += float(produit["prix"]) * item.quantite
-
-        cp = models.CommandeProduit(
+        total += float(data["prix"]) * item.quantite
+        db.add(models.CommandeProduit(
             commande_id=db_commande.id,
             produit_id=item.produit_id,
             quantite=item.quantite
-        )
-        db.add(cp)
-
-        publish_stock_update(item.produit_id, item.quantite)
+        ))
 
     db_commande.total = total
     db.commit()
     db.refresh(db_commande)
+
+    evenement = {
+        "id_commande": db_commande.id,
+        "total": float(db_commande.total),
+        "produits": [
+            {"produit_id": p.produit_id, "quantite": p.quantite}
+            for p in db_commande.produits
+        ],
+        "timestamp": db_commande.date_commande.isoformat()
+    }
+    publish_commande_creee(evenement)
+
     return db_commande
 
 def get_all_commandes(db: Session):

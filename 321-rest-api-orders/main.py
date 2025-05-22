@@ -1,23 +1,24 @@
-from fastapi import FastAPI, Depends, HTTPException
+# main.py
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 import models, schemas, crud
-import logging
-import socket
+import logging, socket
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Commandes API",
     version="1.0.0",
-    root_path="/api/commandes" 
+    root_path="/api/commandes"
 )
 
 @app.on_event("startup")
 def startup_event():
     logging.basicConfig(level=logging.INFO)
-    logging.info("The API is up and running on port 8000")
-    logging.info("Swagger available at http://localhost/api/commandes/docs")
+    logging.info("API démarrée sur le port 8000")
+    logging.info("Swagger disponible sur http://localhost/api/commandes/docs")
+
 
 def get_db():
     db = SessionLocal()
