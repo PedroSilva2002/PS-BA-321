@@ -68,6 +68,13 @@ services:
       RABBITMQ_DEFAULT_PASS: password
     networks:
       - backend
+  mail-worker:
+    build: ./321-worker-mail
+    depends_on:
+      - rabbitmq
+    networks:
+      - backend
+
   traefik:
     image: traefik:v2.9
     command:
