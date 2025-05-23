@@ -42,7 +42,6 @@ services:
       - "traefik.http.services.produits-docs.loadbalancer.server.port=3000"
     networks:
       - backend
-
   produits-db:
     image: postgres:13
     restart: always

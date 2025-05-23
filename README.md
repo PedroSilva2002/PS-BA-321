@@ -89,13 +89,13 @@ Chaque service consomme depuis une **queue different**, liée à l’exchange **
 
 ---
 
-### ✅ Avantages du pattern Pub/Sub
+### Avantages du pattern Pub/Sub
 
 - **Découplage total** : chaque service consomme indépendamment le message.
 - **Scalabilité** : on peut dupliquer les consommateurs (stock, mail, logs...).
 - **Résilience** : les messages sont persistés dans les queues même si un service est temporairement hors-ligne.
 
-## 🧠 Justification de l’usage de RabbitMQ
+## Justification de l’usage de RabbitMQ
 
 Vu l’architecture RabbitMQ a été utilisé parce que il permet :
 
